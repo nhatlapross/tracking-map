@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import customMarkerIcon from '../assets/car.svg';
 import axios from 'axios';
 
 const MapView = () => {
-  const [currentPosition, setCurrentPosition] = useState([51.505, -0.09]);
+  const [currentPosition, setCurrentPosition] = useState(null);
   const [destination, setDestination] = useState([51.515, -0.1]);
   const [route, setRoute] = useState([]);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -31,6 +31,12 @@ const MapView = () => {
     const handleError = (error) => {
       console.error("Error getting position: ", error);
     };
+
+    navigator.geolocation.getCurrentPosition(handlePositionUpdate, handleError, {
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0,
+    });
 
     const watchId = navigator.geolocation.watchPosition(handlePositionUpdate, handleError, {
       enableHighAccuracy: true,
@@ -66,19 +72,32 @@ const MapView = () => {
     //   });
   }, []);
 
+  const MapCenterSetter = () => {
+    const map = useMap();
+
+    useEffect(() => {
+      if (currentPosition) {
+        map.setView(currentPosition, 13); // Set zoom level to 13
+      }
+    }, [currentPosition, map]);
+
+    return null;
+  };
+
   return (
     <div>
     <button onClick={handleStartStop}>
       {isDrawing ? 'Stop' : 'Start'}
     </button>
-    <MapContainer center={currentPosition} zoom={13} style={{ height: '100vh' }}>
+    <MapContainer center={currentPosition || [51.505, -0.09]} zoom={13} style={{ height: '100vh' }}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      <Marker position={currentPosition} icon={customIcon} />
+      {currentPosition && <Marker position={currentPosition} icon={customIcon} />}
       <Marker position={destination} icon={customIcon} />
       <Polyline positions={route} color="blue" />
+      <MapCenterSetter />
     </MapContainer>
   </div>
   );

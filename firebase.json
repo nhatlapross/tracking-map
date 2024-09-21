@@ -1,0 +1,7 @@
+{
+    "emulators": {
+      "storage": {
+        "cors": "cors.json"
+      }
+    }
+  }
